@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Khám phá | CultureTrail - Nền tảng Du lịch Văn hóa</title>
+    <title>Kiểm duyệt bài viết | CultureTrail - Nền tảng Du lịch Văn hóa</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
     <script src="../assets/js/tailwind.config.js"></script>
     <!-- [SPLIT] Khoi <style> cua file goc -> assets/css/style.css (giu nguyen) -->
     <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/pages/explorer.css">
+    <link rel="stylesheet" href="../assets/css/pages/curator.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
 </head>
 <body class="font-sans text-gray-800 antialiased h-screen flex selection:bg-brand-100 selection:text-brand-700">
@@ -121,30 +121,13 @@
         </header>
 
         <!-- ================================================== -->
-        <!-- VIEW 3: DU KHÁCH - KHÁM PHÁ (DISCOVER) -->
+        <!-- VIEW 8: QUẢN TRỊ - KIỂM DUYỆT BÀI VIẾT -->
         <!-- ================================================== -->
-        <section id="view-exp-discover" class="view-section bg-gray-50 flex-grow">
+        <section id="view-cur-review" class="view-section bg-stone-50 flex-grow">
             <div class="p-6 md:p-10 max-w-7xl mx-auto w-full flex-grow">
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-900">Khám phá Câu chuyện</h2>
-                        <p class="text-gray-500 mt-2">Tìm hiểu sâu hơn về cội nguồn văn hóa qua từng bước chân.</p>
-                    </div>
-                </div>
-                
-                <div class="flex flex-wrap gap-3 mb-8" id="filter-buttons">
-                    <button onclick="filterCategory(this)" class="active-filter px-6 py-2.5 rounded-full text-sm font-bold bg-brand-700 text-white transition-colors">Tất cả</button>
-                    <button onclick="filterCategory(this)" class="px-6 py-2.5 rounded-full text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">Làng nghề</button>
-                    <button onclick="filterCategory(this)" class="px-6 py-2.5 rounded-full text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">Ẩm thực</button>
-                    <!-- [V2] Bổ sung chuyên mục lọc -->
-                    <button onclick="filterCategory(this)" class="px-6 py-2.5 rounded-full text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">Nghệ thuật</button>
-                    <button onclick="filterCategory(this)" class="px-6 py-2.5 rounded-full text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">Thủ công</button>
-                    <button onclick="filterCategory(this)" class="px-6 py-2.5 rounded-full text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">Lễ hội</button>
-                    <button onclick="filterCategory(this)" class="px-6 py-2.5 rounded-full text-sm font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">Di tích</button>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12" id="public-posts-container">
-                    <!-- Sẽ được render bởi JS dựa trên bài viết approved -->
+                <button onclick="switchView('view-adm-dash')" class="mb-4 font-bold text-gray-500 hover:text-brand-600 flex items-center gap-2 transition-colors">&larr; Trở lại bảng điều khiển</button>
+                <div id="review-container">
+                    <!-- Rendered by JS -->
                 </div>
             </div>
         </section>
@@ -207,8 +190,19 @@
     <script src="../assets/js/page-nav.js"></script>
     <script src="../assets/js/role-switcher.js"></script>
     <script>
-        // Kich hoat view cua chinh trang nay (code goc: DOMContentLoaded -> switchView)
-        document.addEventListener("DOMContentLoaded", () => switchView('view-exp-discover'));
+        // Kich hoat view cua chinh trang nay kem tu dong mo bai viet can duyet
+        document.addEventListener("DOMContentLoaded", () => {
+            switchView('view-cur-review');
+            const rc = document.getElementById('review-container');
+            if (rc && (!rc.innerHTML || !rc.innerHTML.trim())) {
+                const pendingPost = (typeof posts !== 'undefined' && posts.find(p => p.status === 'pending')) || 
+                                    (typeof posts !== 'undefined' && posts[0]) || 
+                                    { id: 'CT-1003' };
+                if (typeof openReviewMode === 'function' && pendingPost) {
+                    openReviewMode(pendingPost.id);
+                }
+            }
+        });
     </script>
 </body>
 </html>
