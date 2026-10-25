@@ -1,9 +1,0 @@
-/* Login Page Specific CSS */
-.login-bg-pattern {
-    background-color: #f8fafc;
-    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-    background-size: 24px 24px;
-}
-.login-card-shadow {
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-}
