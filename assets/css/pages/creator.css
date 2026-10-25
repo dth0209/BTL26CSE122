@@ -1,0 +1,8 @@
+/* Creator Pages Specific CSS */
+.creator-card-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+.creator-image-preview {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
