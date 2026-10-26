@@ -1,0 +1,57 @@
+[
+  {
+    "id": "place-1",
+    "name": "Làng cổ Gốm sứ Bát Tràng",
+    "address": "Xã Bát Tràng, Huyện Gia Lâm, Hà Nội",
+    "lat": 20.9789,
+    "lng": 105.9324,
+    "openHours": "08:00 - 18:00",
+    "ticketPrice": "Miễn phí tham quan (Vé trải nghiệm làm gốm từ 50.000đ)",
+    "imageUrl": "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80",
+    "localArtisan": "Nghệ nhân Trần Văn Hùng"
+  },
+  {
+    "id": "place-2",
+    "name": "Làng lụa Vạn Phúc",
+    "address": "Phường Vạn Phúc, Quận Hà Đông, Hà Nội",
+    "lat": 20.9723,
+    "lng": 105.7725,
+    "openHours": "07:30 - 19:00",
+    "ticketPrice": "Miễn phí tham quan",
+    "imageUrl": "https://images.unsplash.com/photo-1606744824163-985d376605aa?auto=format&fit=crop&w=800&q=80",
+    "localArtisan": "Nghệ nhân Nguyễn Thị Tâm"
+  },
+  {
+    "id": "place-3",
+    "name": "Không gian tranh dân gian Đông Hồ",
+    "address": "Xã Song Hồ, Huyện Thuận Thành, Bắc Ninh",
+    "lat": 21.0521,
+    "lng": 106.0712,
+    "openHours": "08:00 - 17:00",
+    "ticketPrice": "20.000đ / người",
+    "imageUrl": "https://images.unsplash.com/photo-1582562124811-c09040d0a901?auto=format&fit=crop&w=800&q=80",
+    "localArtisan": "Nghệ nhân Nguyễn Hữu Hợp"
+  },
+  {
+    "id": "place-4",
+    "name": "Làng nón lá Chuông",
+    "address": "Xã Phương Tú, Huyện Ứng Hòa, Hà Nội",
+    "lat": 20.7324,
+    "lng": 105.7612,
+    "openHours": "08:00 - 17:30",
+    "ticketPrice": "Miễn phí tham quan",
+    "imageUrl": "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80",
+    "localArtisan": "Nghệ nhân Lê Thị Mai"
+  },
+  {
+    "id": "place-5",
+    "name": "Vùng chè Shan Tuyết cổ thụ Suối Giàng",
+    "address": "Xã Suối Giàng, Huyện Văn Chấn, Yên Bái",
+    "lat": 21.6124,
+    "lng": 104.5712,
+    "openHours": "07:00 - 18:00",
+    "ticketPrice": "Miễn phí tham quan",
+    "imageUrl": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80",
+    "localArtisan": "Giàng A Páo"
+  }
+]
