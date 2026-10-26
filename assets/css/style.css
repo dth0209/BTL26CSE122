@@ -1,6 +1,34 @@
+/* ==========================================================================
+   DESIGN TOKENS & CSS VARIABLES (MỤC 4.2 BAREM CSE122)
+   ========================================================================== */
+:root {
+    /* Brand Color Palette */
+    --brand-50: #ecfdf5;
+    --brand-100: #d1fae5;
+    --brand-200: #a7f3d0;
+    --brand-500: #10b981;
+    --brand-600: #059669;
+    --brand-700: #047857;
+    --brand-800: #065f46;
+    --brand-900: #064e3b;
+
+    /* Base Colors & Typography */
+    --color-bg-base: #f8fafc;
+    --color-text-main: #1f2937;
+    --font-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* Radii & Shadows (Token bo góc và đổ bóng) */
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-3xl: 24px;
+    --radius-4xl: 32px;
+    --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.04);
+    --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
 body {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f8fafc;
+    font-family: var(--font-primary);
+    background-color: var(--color-bg-base);
     overflow-x: hidden;
 }
 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
