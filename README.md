@@ -86,5 +86,19 @@ Sản phẩm được xây dựng bằng kiến trúc Frontend thuần (Vanilla 
 3. Nhấp chuột phải vào tệp `index.html` → Chọn **Open with Live Server**.
 4. Trình duyệt tự động mở tại `http://localhost:5501` hoặc `http://127.0.0.1:5500`.
 
+### Cấu hình Gemini cho bản demo cục bộ
+
+1. Mở `assets/js/gemini-config.local.js`.
+2. Thay duy nhất chuỗi `DAN_API_KEY_CUA_TOI_VAO_DAY` tại hằng số `GEMINI_API_KEY` bằng API key của bạn.
+3. Giữ nguyên model `gemini-3.5-flash-lite`, lưu tệp và tải lại trang Live Server.
+
+`gemini-config.local.js` đã nằm trong `.gitignore`; `gemini-config.example.js` là tệp mẫu không chứa key. Đây chỉ là cấu hình phục vụ demo cục bộ: API key đặt trong JavaScript frontend vẫn có thể bị người dùng trình duyệt xem thấy và không phù hợp để triển khai website công khai. Khi triển khai thật, nên gọi Gemini qua một backend/proxy có kiểm soát xác thực, quota và domain.
+
+Luồng dữ liệu AI: các tệp JSON chỉ seed `ct_stories`, `ct_places`, `ct_creators` ở lần chạy đầu → mọi thay đổi sau đó dùng bản hiện hành trong LocalStorage → `ai-data-context.js` lọc và nối quan hệ theo ID, đồng thời loại số điện thoại/email → `gemini-service.js` gọi Gemini qua header `x-goog-api-key` → `app.js` xác thực kết quả có cấu trúc và render an toàn lên UI.
+
+Chatbot và AI lập lịch có bật Google Search grounding (`enableGoogleSearch: true`). Khi điểm đến chưa có trong CultureTrail, Gemini vẫn có thể tư vấn bằng nguồn web nhưng giao diện phải thông báo đó là thông tin ngoài dự án và CultureTrail chưa cung cấp chuyến đi/dịch vụ tương ứng. Google Search grounding có thể sử dụng quota hoặc phát sinh chi phí theo chính sách tài khoản Gemini API.
+
+Gói người dùng Gemini Plus/Google AI Pro và hạn mức Gemini API là hai hệ thống riêng. API key kế thừa billing/quota của Google Cloud project trong AI Studio. Nếu quota riêng của Search grounding trả lỗi 429, CultureTrail tự thử lại một lần không dùng Search, hiển thị cảnh báo nguồn ngoài chưa được kiểm chứng trực tiếp, và tạm ngưng thử Search trong 5 phút để tránh lặp lỗi.
+
 ### Chuyển đổi vai trò Demo:
 Nhấp vào biểu tượng chiếc khiên **🛡️ (Demo Role Switcher)** ở góc dưới bên phải màn hình để chuyển tức thì giữa 4 vai trò hoặc truy cập trang [login.html](pages/login.html).

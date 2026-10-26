@@ -11,17 +11,7 @@
             admin: { id: 'adm1', name: 'Trần Duy', role: 'Admin', avatar: '32' }
         };
 
-        // Mảng bài viết mẫu
-        // [CultureTrail Persistence] Reset cache if old mojibake was detected in localStorage
-        try {
-            ['ct_posts', 'ct_stories', 'ct_places', 'ct_trails', 'ct_admin_plans'].forEach(k => {
-                const item = localStorage.getItem(k);
-                if (item && (item.indexOf('\u00C4') !== -1 || item.indexOf('\u00C3') !== -1 || item.indexOf('\u00E1\u00BB') !== -1)) {
-                    localStorage.removeItem(k);
-                }
-            });
-        } catch(e) {}
-
+        // Mảng bài viết mẫu. Không tự xóa dữ liệu người dùng trong LocalStorage.
         // [CultureTrail Persistence] Load posts from localStorage if available
         let posts = [];
         try {
@@ -584,7 +574,8 @@
 
         function savePosts() {
             try {
-                localStorage.setItem('ct_posts', JSON.stringify(posts));
+                if (window.ApiService) window.ApiService.save('posts', posts);
+                else localStorage.setItem('ct_posts', JSON.stringify(posts));
             } catch(e) {}
         }
 
@@ -665,7 +656,7 @@
         });
 
         // Từ điển tri thức văn hóa nội bộ CultureTrail (Offline & Graceful Fallback)
-        function getSmartCultureAiReply(msg) {
+        function getSmartCultureAiReplyDemo(msg) {
             const q = (msg || '').toLowerCase();
             if (q.includes('bát tràng') || q.includes('gốm')) {
                 return `🏺 <b>Làng gốm Bát Tràng (Gia Lâm, Hà Nội):</b><br>
@@ -714,7 +705,7 @@ Chào bạn! Tôi có thể tư vấn chuyên sâu về các làng nghề truy�
 Bạn đang muốn tìm hiểu về địa danh hay hoạt động trải nghiệm nào?`;
         }
 
-        window.sendChatMessage = async function() {
+        window.sendChatMessageLegacyDemo = async function() {
             const input = document.getElementById('chat-input');
             if (!input) return;
             const msg = input.value.trim();
@@ -747,33 +738,9 @@ Bạn đang muốn tìm hiểu về địa danh hay hoạt động trải nghi�
             // 3. Xử lý phản hồi (Ưu tiên Client Code an toàn trong sessionStorage, tự động fallback tri thức thông minh)
             setTimeout(async () => {
                 let replyHtml = '';
-                const userAuthCode = sessionStorage.getItem('GEMINI_CLIENT_CODE');
-
-                if (userAuthCode) {
-                    try {
-                        const systemPrompt = "Bạn là một trợ lý ảo am hiểu về văn hóa, du lịch, lịch sử và các làng nghề truyền thống của Việt Nam. Tên của bạn là Trợ lý Văn hóa AI. Hãy trả lời ngắn gọn, thân thiện và hữu ích, sử dụng tiếng Việt.";
-                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(userAuthCode)}`;
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: msg }] }],
-                                systemInstruction: { parts: [{ text: systemPrompt }] }
-                            })
-                        });
-                        if (response.ok) {
-                            const result = await response.json();
-                            const raw = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                            replyHtml = raw.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>');
-                        }
-                    } catch (err) {
-                        console.warn('Gemini API fetch error, using local fallback:', err);
-                    }
-                }
-
-                if (!replyHtml) {
-                    replyHtml = getSmartCultureAiReply(msg);
-                }
+                // Chỉ còn là kịch bản Demo/Test cũ, không kết nối API và không
+                // được dùng bởi luồng Gemini live được định nghĩa cuối tệp.
+                replyHtml = `<b>Chế độ Demo/Test (không phải Gemini):</b><br>${getSmartCultureAiReplyDemo(msg)}`;
 
                 const loadEl = document.getElementById(loadingId);
                 if (loadEl) {
@@ -798,36 +765,8 @@ Bạn đang muốn tìm hiểu về địa danh hay hoạt động trải nghi�
 
 
         document.addEventListener("DOMContentLoaded", () => switchView('view-home'));
-        // Tự động thêm nút cài đặt mã kết nối AI trên thanh tiêu đề Chatbox (Không làm lộ Key trong code)
-        document.addEventListener("DOMContentLoaded", function() {
-            const chatHeader = document.getElementById('chat-header');
-            if (chatHeader) {
-                const btnGroup = chatHeader.querySelector('div:last-child');
-                if (btnGroup && !document.getElementById('ai-config-btn')) {
-                    const cfgBtn = document.createElement('button');
-                    cfgBtn.id = 'ai-config-btn';
-                    cfgBtn.type = 'button';
-                    cfgBtn.title = 'Cài đặt kết nối AI trực tiếp';
-                    cfgBtn.className = 'p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 focus:outline-none transition-colors text-xs';
-                    cfgBtn.innerHTML = '🔑';
-                    cfgBtn.onclick = function(e) {
-                        e.stopPropagation();
-                        const current = sessionStorage.getItem('GEMINI_CLIENT_CODE') || '';
-                        const code = prompt('Nhập mã kết nối Gemini AI để nhận dữ liệu trực tiếp từ AI:', current);
-                        if (code !== null) {
-                            if (code.trim()) {
-                                sessionStorage.setItem('GEMINI_CLIENT_CODE', code.trim());
-                                if (typeof showToast === 'function') showToast('Đã kết nối trực tiếp với AI!', 'success');
-                            } else {
-                                sessionStorage.removeItem('GEMINI_CLIENT_CODE');
-                                if (typeof showToast === 'function') showToast('Đã ngắt kết nối AI trực tiếp', 'info');
-                            }
-                        }
-                    };
-                    btnGroup.insertBefore(cfgBtn, btnGroup.firstChild);
-                }
-            }
-        });
+        // Gemini key được cấu hình duy nhất trong gemini-config.local.js; giao diện
+        // không yêu cầu và không lưu key trong sessionStorage.
 
         /* ==========================================================================
            [V2] MỞ RỘNG: THÊM NGHỆ NHÂN + QUY TRÌNH DUYỆT BÀI + KHU QUẢN TRỊ ADMIN
@@ -1660,22 +1599,27 @@ const INITIAL_DATA = {
 };
 
 function initDataStore() {
-    ['stories', 'places', 'creators', 'events', 'collections', 'trails', 'admin_plans'].forEach(key => {
-        if (!localStorage.getItem(`ct_${key}`)) {
-            if (INITIAL_DATA[key]) {
-                localStorage.setItem(`ct_${key}`, JSON.stringify(INITIAL_DATA[key]));
-            }
-        }
-    });
+    // api.js is loaded before app.js and owns first-run JSON seeding. Keeping
+    // this function preserves old callers without racing or overwriting JSON.
+    return window.ApiService ? window.ApiService.ready : Promise.resolve();
 }
 initDataStore();
 
 function getStore(key) {
-    return JSON.parse(localStorage.getItem(`ct_${key}`) || '[]');
+    try {
+        const data = JSON.parse(localStorage.getItem(`ct_${key}`) || '[]');
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        return [];
+    }
 }
 
 function setStore(key, data) {
-    localStorage.setItem(`ct_${key}`, JSON.stringify(data));
+    if (window.ApiService) window.ApiService.save(key, data);
+    else {
+        localStorage.setItem(`ct_${key}`, JSON.stringify(data));
+        window.dispatchEvent(new CustomEvent('ct-data-updated', { detail: { key: `ct_${key}` } }));
+    }
 }
 
 /* ==========================================================================
@@ -1683,7 +1627,7 @@ function setStore(key, data) {
    Chuẩn 6 bước: Input -> Processing -> Output -> Explain -> Control -> Save
    Kèm Failure / Uncertainty UX (Mục 6.3 Barem)
    ========================================================================== */
-window.runAiTrailGenerator = function(promptText) {
+window.runAiTrailGeneratorLegacyDemo = function(promptText) {
     const loadingElem = document.getElementById('ai-loading');
     const resultElem = document.getElementById('ai-results');
     const errorElem = document.getElementById('ai-error');
@@ -1960,7 +1904,7 @@ window.renderMySavedTrails = function() {
    Chuẩn 6 bước: Input -> Processing -> Output -> Explain -> Control -> Save
    Kèm Failure / Uncertainty UX (Mục 6.3 Barem)
    ========================================================================== */
-window.runAiStoryReview = function(postId, isUncertaintyTest = false) {
+window.runAiStoryReviewLegacyDemo = function(postId, isUncertaintyTest = false) {
     const loading = document.getElementById('curator-ai-loading');
     const display = document.getElementById('curator-ai-display');
     if (!display) return;
@@ -2059,7 +2003,7 @@ window.runAiStoryReview = function(postId, isUncertaintyTest = false) {
     }, 600);
 };
 
-window.applyAiHighlightsAndApprove = function(postId) {
+window.applyAiHighlightsAndApproveLegacyDemo = function(postId) {
     const highlights = document.getElementById('ai-curator-highlights')?.value || '';
     let post = posts.find(p => p.id === postId);
     if (!post) {
@@ -2090,7 +2034,7 @@ window.applyAiHighlightsAndApprove = function(postId) {
    Chuẩn 6 bước: Input -> Processing -> Output -> Explain -> Control -> Save
    Kèm Failure / Uncertainty UX (Mục 6.3 Barem)
    ========================================================================== */
-window.runAiAdminAnalytics = function(isFailureTest = false) {
+window.runAiAdminAnalyticsLegacyDemo = function(isFailureTest = false) {
     const loading = document.getElementById('admin-ai-loading');
     const display = document.getElementById('admin-ai-results');
     const errorBox = document.getElementById('admin-ai-error');
@@ -2196,7 +2140,7 @@ window.runAiAdminAnalytics = function(isFailureTest = false) {
     }, 700);
 };
 
-window.saveAiAdminPlan = function() {
+window.saveAiAdminPlanLegacyDemo = function() {
     const textarea = document.getElementById('admin-ai-plan-text');
     const domain = document.getElementById('admin-ai-domain')?.value || 'Toàn bộ hệ thống di sản';
     const timeframe = document.getElementById('admin-ai-timeframe')?.value || 'Quý 2/2026';
@@ -2221,7 +2165,7 @@ window.saveAiAdminPlan = function() {
     renderAdminSavedPlans();
 };
 
-window.exportAiReportJson = function() {
+window.exportAiReportJsonLegacyDemo = function() {
     const plans = getStore('admin_plans') || [];
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(plans, null, 2));
     const dlAnchor = document.createElement('a');
@@ -2270,3 +2214,529 @@ document.addEventListener("DOMContentLoaded", () => {
         renderAdminSavedPlans();
     }
 });
+
+/* ========================================================================== 
+   GEMINI LIVE INTEGRATION
+   These definitions intentionally replace the legacy Demo/Test generators
+   above while preserving every function name referenced by existing HTML.
+   ========================================================================== */
+const ctAiChatHistory = [];
+const ctAiBusy = new Set();
+let ctAiLastReview = null;
+let ctAiLastAdminReport = null;
+
+function ctAiEscape(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function ctAiErrorMessage(error) {
+    return error && error.message ? error.message : 'Không thể xử lý yêu cầu AI. Vui lòng thử lại.';
+}
+
+function ctAiSetBusy(key, busy) {
+    if (busy) ctAiBusy.add(key); else ctAiBusy.delete(key);
+    document.querySelectorAll('[data-ct-ai-action]').forEach(button => {
+        if (button.dataset.ctAiAction === key) button.disabled = busy;
+    });
+}
+
+function ctAiShowError(container, error, retry) {
+    if (!container) return;
+    container.classList.remove('hidden');
+    container.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'p-5 bg-red-50 border border-red-200 rounded-2xl text-red-800 text-sm space-y-3 animate-fade-in';
+    const message = document.createElement('p');
+    message.className = 'font-semibold leading-relaxed';
+    message.textContent = ctAiErrorMessage(error);
+    card.appendChild(message);
+    const note = document.createElement('p');
+    note.className = 'text-xs text-red-700';
+    note.textContent = 'Không có kết quả giả lập nào được dùng thay cho phản hồi Gemini.';
+    card.appendChild(note);
+    if (retry) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold';
+        button.textContent = 'Thử lại';
+        button.addEventListener('click', retry, { once: true });
+        card.appendChild(button);
+    }
+    container.appendChild(card);
+}
+
+window.getSmartCultureAiReply = async function (message, history = ctAiChatHistory) {
+    const context = await window.CultureTrailAiData.getContext({ query: message, purpose: 'chat' });
+    const normalized = String(message).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const needsCurrentWebData = /\b(hom nay|hien nay|moi nhat|thoi tiet|giao thong|duong di|gia ve|gio mo cua|khach san|nha hang)\b/.test(normalized);
+    const shouldUseGoogleSearch = !context.coverage?.hasProjectMatch || needsCurrentWebData;
+    const reply = await window.GeminiService.generateText({
+        prompt: message,
+        context,
+        history,
+        requestKey: `chat:${Date.now()}`,
+        useGoogleSearch: shouldUseGoogleSearch
+    });
+    const hasTravelIntent = /\b(di|den|du lich|tham quan|dia diem|lich trinh|chuyen di|nghi duong|check in)\b/.test(normalized);
+    const normalizedReply = String(reply).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const alreadyDisclosed = normalizedReply.includes('culturetrail') && normalizedReply.includes('chua co');
+    if (hasTravelIntent && context.coverage && !context.coverage.hasProjectMatch && !alreadyDisclosed) {
+        return `Lưu ý từ CultureTrail: Dịch vụ của dự án hiện chưa có chuyến đi hoặc điểm đến phù hợp trực tiếp với yêu cầu này. Phần tư vấn dưới đây sử dụng thông tin tham khảo bên ngoài CultureTrail.\n\n${reply}`;
+    }
+    return reply;
+};
+
+window.sendChatMessage = async function () {
+    const input = document.getElementById('chat-input');
+    const box = document.getElementById('chat-messages');
+    if (!input || !box || ctAiBusy.has('chat')) return;
+    const message = input.value.trim();
+    if (!message) return;
+
+    const userBubble = document.createElement('div');
+    userBubble.className = 'bg-brand-600 text-white p-3 rounded-2xl rounded-tr-none self-end max-w-[85%] ml-auto shadow-sm text-sm break-words';
+    userBubble.textContent = message;
+    box.appendChild(userBubble);
+    input.value = '';
+
+    const row = document.createElement('div');
+    row.className = 'flex gap-2 items-start animate-fade-in';
+    const icon = document.createElement('div');
+    icon.className = 'w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 flex-shrink-0 border border-brand-200';
+    icon.textContent = '✨';
+    const answer = document.createElement('div');
+    answer.className = 'bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-gray-600 border border-gray-100 max-w-[85%] text-sm leading-relaxed whitespace-pre-wrap break-words';
+    answer.textContent = 'Gemini đang phân tích dữ liệu CultureTrail…';
+    row.append(icon, answer);
+    box.appendChild(row);
+    box.scrollTop = box.scrollHeight;
+    ctAiSetBusy('chat', true);
+
+    try {
+        const reply = await window.getSmartCultureAiReply(message, ctAiChatHistory);
+        answer.classList.remove('text-gray-600');
+        answer.classList.add('text-gray-700');
+        answer.textContent = reply;
+        ctAiChatHistory.push({ role: 'user', text: message }, { role: 'model', text: reply });
+        if (ctAiChatHistory.length > 16) ctAiChatHistory.splice(0, ctAiChatHistory.length - 16);
+    } catch (error) {
+        answer.innerHTML = '';
+        answer.classList.add('text-red-700', 'bg-red-50', 'border-red-200');
+        const text = document.createElement('p');
+        text.textContent = ctAiErrorMessage(error);
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'mt-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold';
+        retry.textContent = 'Thử lại';
+        retry.onclick = () => { row.remove(); input.value = message; window.sendChatMessage(); };
+        answer.append(text, retry);
+    } finally {
+        ctAiSetBusy('chat', false);
+        box.scrollTop = box.scrollHeight;
+    }
+};
+
+const CT_TRAIL_SCHEMA = {
+    type: 'OBJECT',
+    required: ['title', 'duration', 'summary', 'projectAvailability', 'dataScope', 'steps', 'reasoning', 'limitations', 'sourceIds'],
+    properties: {
+        title: { type: 'STRING' },
+        duration: { type: 'STRING' },
+        summary: { type: 'STRING' },
+        projectAvailability: { type: 'STRING' },
+        dataScope: { type: 'STRING', enum: ['PROJECT', 'MIXED', 'EXTERNAL'] },
+        estimatedBudget: { type: 'STRING' },
+        reasoning: { type: 'STRING' },
+        limitations: { type: 'ARRAY', items: { type: 'STRING' } },
+        sourceIds: { type: 'ARRAY', items: { type: 'STRING' } },
+        steps: {
+            type: 'ARRAY',
+            items: {
+                type: 'OBJECT',
+                required: ['time', 'spot', 'activity', 'description'],
+                properties: {
+                    time: { type: 'STRING' },
+                    placeId: { type: 'STRING' },
+                    spot: { type: 'STRING' },
+                    activity: { type: 'STRING' },
+                    description: { type: 'STRING' },
+                    estimatedCost: { type: 'STRING' }
+                }
+            }
+        }
+    }
+};
+
+function ctAiValidateTrail(trail) {
+    const validSteps = trail && Array.isArray(trail.steps) && trail.steps.length > 0
+        && trail.steps.every(step => step && step.time && step.spot && step.activity && step.description);
+    if (!trail || !trail.title || !trail.duration || !trail.summary || !trail.projectAvailability
+        || !['PROJECT', 'MIXED', 'EXTERNAL'].includes(trail.dataScope) || !trail.reasoning
+        || !validSteps || !Array.isArray(trail.limitations) || !Array.isArray(trail.sourceIds)) {
+        throw new Error('Gemini trả về lịch trình thiếu trường bắt buộc. Vui lòng tạo lại.');
+    }
+    return trail;
+}
+
+function ctAiRenderTrail(trail, resultElem) {
+    window.__ctAiLastTrail = trail;
+    const limitations = (trail.limitations || []).map(item => `<li>${ctAiEscape(item)}</li>`).join('');
+    const isExternal = trail.dataScope !== 'PROJECT';
+    const searchUnavailable = Boolean(trail._searchUnavailable);
+    const groundingSources = (trail._groundingSources || [])
+        .map(source => `<li>${ctAiEscape(source.title)}: ${ctAiEscape(source.uri)}</li>`).join('');
+    resultElem.classList.remove('hidden');
+    resultElem.innerHTML = `
+        <div class="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6 animate-fade-in">
+            <div class="border-b border-gray-100 pb-5">
+                <span class="px-3.5 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-full border border-brand-200">✨ LỊCH TRÌNH TỪ GEMINI</span>
+                <h4 id="ai-trail-title" class="text-2xl font-bold text-gray-900 mt-2">${ctAiEscape(trail.title)}</h4>
+                <p class="text-gray-500 text-xs mt-1">${ctAiEscape(trail.duration)}${trail.estimatedBudget ? ` • Chi phí dự kiến: ${ctAiEscape(trail.estimatedBudget)}` : ''}</p>
+                <p class="text-sm text-gray-600 mt-2">${ctAiEscape(trail.summary)}</p>
+            </div>
+            <div class="p-4 ${isExternal ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'} border rounded-2xl text-xs">
+                <b>${isExternal ? 'Thông tin ngoài danh mục CultureTrail:' : 'Dữ liệu dịch vụ CultureTrail:'}</b> ${ctAiEscape(trail.projectAvailability)}
+            </div>
+            ${searchUnavailable ? '<div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900"><b>Google Search đang hết hạn mức riêng.</b> Lịch trình ngoài dự án được tạo từ kiến thức của Gemini, chưa được kiểm chứng trực tiếp trên web; hãy kiểm tra lại trước chuyến đi.</div>' : ''}
+            <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-xs text-indigo-900">
+                <p class="font-bold mb-1">💡 Căn cứ đề xuất</p><p>${ctAiEscape(trail.reasoning)}</p>
+            </div>
+            <div class="space-y-4" id="ai-steps-container">
+                ${trail.steps.map((step, index) => `
+                    <div class="flex gap-4 items-start">
+                        <span class="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-xs shrink-0">${index + 1}</span>
+                        <div class="bg-gray-50 p-4 rounded-2xl flex-1 border border-gray-100">
+                            <span class="text-xs font-bold text-brand-600">${ctAiEscape(step.time)}</span>
+                            <h5 class="font-bold text-gray-900">${ctAiEscape(step.spot)}</h5>
+                            <p class="text-xs text-gray-700">${ctAiEscape(step.activity)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${ctAiEscape(step.description)}</p>
+                            ${step.estimatedCost ? `<p class="text-xs text-emerald-700 mt-1">Chi phí: ${ctAiEscape(step.estimatedCost)}</p>` : ''}
+                        </div>
+                    </div>`).join('')}
+            </div>
+            ${limitations ? `<div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900"><b>Giới hạn dữ liệu:</b><ul class="list-disc ml-5 mt-1">${limitations}</ul></div>` : ''}
+            ${groundingSources ? `<div class="p-4 bg-sky-50 border border-sky-200 rounded-2xl text-xs text-sky-900"><b>Nguồn web tham khảo:</b><ul class="list-disc ml-5 mt-1 break-all">${groundingSources}</ul></div>` : ''}
+            <div id="ai-edit-box" class="hidden p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                <label class="block text-xs font-bold text-gray-700 mb-2">Chỉnh sửa tiêu đề trước khi lưu:</label>
+                <input type="text" id="ai-edit-title-input" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-sm">
+            </div>
+            <div class="pt-4 border-t border-gray-100 flex flex-wrap gap-2.5 justify-end">
+                <button type="button" id="ct-ai-edit-trail" class="px-4 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-xs">✏️ Chỉnh sửa</button>
+                <button type="button" id="ct-ai-regenerate-trail" class="px-4 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl text-xs">🔄 Tạo lại</button>
+                <button type="button" id="btn-save-ai-trail" class="px-5 py-2.5 bg-brand-600 text-white font-bold rounded-xl text-xs">💾 Lưu lịch trình</button>
+            </div>
+        </div>`;
+    const titleInput = document.getElementById('ai-edit-title-input');
+    titleInput.value = trail.title;
+    document.getElementById('ct-ai-edit-trail').onclick = window.toggleEditAiTrail;
+    document.getElementById('ct-ai-regenerate-trail').onclick = () => window.runAiTrailGenerator(document.getElementById('ai-input')?.value || '');
+    document.getElementById('btn-save-ai-trail').onclick = () => {
+        if (titleInput.value.trim()) trail.title = titleInput.value.trim();
+        window.saveAiTrailToMyTrails(trail);
+    };
+}
+
+window.runAiTrailGenerator = async function (promptText) {
+    if (ctAiBusy.has('trail')) return;
+    const raw = String(promptText || '').trim();
+    const loading = document.getElementById('ai-loading');
+    const result = document.getElementById('ai-results');
+    const errorBox = document.getElementById('ai-error');
+    if (!raw || raw.length < 8) {
+        ctAiShowError(errorBox, new Error('Hãy mô tả rõ sở thích, thời lượng, địa điểm hoặc ngân sách mong muốn.'), () => window.runAiTrailGenerator(document.getElementById('ai-input')?.value || ''));
+        return;
+    }
+    if (errorBox) errorBox.classList.add('hidden');
+    if (result) result.classList.add('hidden');
+    if (loading) loading.classList.remove('hidden');
+    ctAiSetBusy('trail', true);
+    try {
+        const context = await window.CultureTrailAiData.getContext({ query: raw, purpose: 'trail' });
+        const trail = ctAiValidateTrail(await window.GeminiService.generateJson({
+            prompt: `Lập lịch trình theo yêu cầu: "${raw}". Trước hết so sánh điểm đến người dùng yêu cầu với projectCatalog. Nếu CultureTrail có dữ liệu phù hợp, ưu tiên dữ liệu dự án. Nếu điểm đến không có trong projectCatalog, dùng Google Search để vẫn lập lịch trình hữu ích, đặt dataScope là EXTERNAL hoặc MIXED và projectAvailability phải nói rõ CultureTrail hiện chưa có chuyến đi/dịch vụ cho điểm đến đó. Không biến dữ liệu web thành dịch vụ CultureTrail. Với giá vé/giờ mở cửa bên ngoài, nêu là tham khảo và cần kiểm tra lại. Không tuyên bố tối ưu quãng đường nếu không đủ tọa độ. sourceIds chỉ chứa ID thật từ DATA_CONTEXT, không tự tạo ID.`,
+            context,
+            schema: CT_TRAIL_SCHEMA,
+            requestKey: `trail:${raw}:${context.revision}`,
+            useGoogleSearch: !context.coverage?.hasProjectMatch
+        }));
+        ctAiRenderTrail(trail, result);
+    } catch (error) {
+        ctAiShowError(errorBox, error, () => window.runAiTrailGenerator(raw));
+    } finally {
+        if (loading) loading.classList.add('hidden');
+        ctAiSetBusy('trail', false);
+    }
+};
+
+window.runGeminiAiGenerator = function () {
+    return window.runAiTrailGenerator(document.getElementById('ai-input')?.value || '');
+};
+
+window.saveAiTrailToMyTrails = function (trail) {
+    if (!trail || !Array.isArray(trail.steps)) return;
+    const trails = getStore('trails');
+    trails.unshift({
+        id: `TR-${Date.now()}`,
+        title: trail.title,
+        duration: trail.duration,
+        steps: trail.steps.map(step => step.spot),
+        itinerary: trail.steps,
+        estimatedBudget: trail.estimatedBudget || '',
+        projectAvailability: trail.projectAvailability,
+        dataScope: trail.dataScope,
+        searchUnavailable: Boolean(trail._searchUnavailable),
+        aiReasoning: trail.reasoning || '',
+        limitations: trail.limitations || [],
+        sourceIds: trail.sourceIds || [],
+        generatedBy: window.CULTURETRAIL_GEMINI_CONFIG?.model || 'gemini-3.5-flash-lite',
+        createdAt: new Date().toISOString().slice(0, 10)
+    });
+    setStore('trails', trails);
+    showToast('Đã lưu lịch trình Gemini vào Lịch trình của tôi.', 'success');
+    renderMySavedTrails();
+};
+
+const CT_REVIEW_SCHEMA = {
+    type: 'OBJECT',
+    required: ['score', 'summary', 'completeness', 'consistency', 'relevance', 'highlights', 'warnings', 'evidence', 'limitations'],
+    properties: {
+        score: { type: 'INTEGER' },
+        summary: { type: 'STRING' },
+        completeness: { type: 'STRING' },
+        consistency: { type: 'STRING' },
+        relevance: { type: 'STRING' },
+        highlights: { type: 'ARRAY', items: { type: 'STRING' } },
+        warnings: { type: 'ARRAY', items: { type: 'STRING' } },
+        evidence: { type: 'ARRAY', items: { type: 'STRING' } },
+        limitations: { type: 'ARRAY', items: { type: 'STRING' } }
+    }
+};
+
+function ctAiValidateReview(review) {
+    const score = Number(review && review.score);
+    if (!review || !Number.isFinite(score) || !review.summary || !review.completeness
+        || !review.consistency || !review.relevance || !Array.isArray(review.highlights)
+        || review.highlights.length !== 3 || !Array.isArray(review.warnings)
+        || !Array.isArray(review.evidence) || !Array.isArray(review.limitations)) {
+        throw new Error('Gemini trả về kết quả thẩm định thiếu trường bắt buộc. Vui lòng thử lại.');
+    }
+    return review;
+}
+
+function ctAiRenderReview(postId, review, display) {
+    const score = Math.max(0, Math.min(100, Number(review.score) || 0));
+    const highlights = (review.highlights || []).slice(0, 3);
+    while (highlights.length < 3) highlights.push('Chưa đủ dữ liệu để xác định điểm nhấn này.');
+    review.score = score;
+    review.highlights = highlights;
+    ctAiLastReview = { postId, review };
+    display.innerHTML = `
+        <div class="bg-gradient-to-br from-indigo-50/70 to-brand-50/70 border border-brand-200 p-5 rounded-2xl shadow-sm space-y-4 animate-fade-in">
+            <div class="flex items-center justify-between"><span class="text-xs font-bold text-brand-800">✨ GEMINI ĐÃ THẨM ĐỊNH</span><span class="font-extrabold text-brand-700">${score}/100</span></div>
+            <p class="text-sm text-gray-700">${ctAiEscape(review.summary)}</p>
+            <div class="grid sm:grid-cols-3 gap-2 text-xs">
+                <div class="p-3 bg-white rounded-xl"><b>Đầy đủ:</b> ${ctAiEscape(review.completeness)}</div>
+                <div class="p-3 bg-white rounded-xl"><b>Nhất quán:</b> ${ctAiEscape(review.consistency)}</div>
+                <div class="p-3 bg-white rounded-xl"><b>Phù hợp:</b> ${ctAiEscape(review.relevance)}</div>
+            </div>
+            ${(review.warnings || []).length ? `<div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs"><b>Cảnh báo:</b><ul class="list-disc ml-5">${review.warnings.map(item => `<li>${ctAiEscape(item)}</li>`).join('')}</ul></div>` : ''}
+            <div><label for="ai-curator-highlights" class="text-xs font-bold text-gray-800">3 điểm nhấn văn hóa (có thể chỉnh sửa):</label><textarea id="ai-curator-highlights" rows="5" class="w-full mt-2 p-3 bg-white border border-gray-300 rounded-xl text-xs"></textarea></div>
+            <div class="p-3 bg-white rounded-xl border border-indigo-100 text-xs"><b>Căn cứ:</b><ul class="list-disc ml-5">${(review.evidence || []).map(item => `<li>${ctAiEscape(item)}</li>`).join('')}</ul></div>
+            ${(review.limitations || []).length ? `<p class="text-xs text-gray-500"><b>Giới hạn:</b> ${ctAiEscape(review.limitations.join(' '))}</p>` : ''}
+            <div class="pt-2 border-t border-brand-100 flex flex-wrap gap-2 justify-end">
+                <button type="button" id="ct-ai-review-retry" class="px-4 py-2 bg-gray-100 rounded-xl text-xs font-bold">🔄 Thẩm định lại</button>
+                <button type="button" id="ct-ai-review-apply" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Áp dụng điểm nhấn & phê duyệt</button>
+            </div>
+            <p class="text-[11px] text-gray-500">Gemini chỉ hỗ trợ thẩm định; quyết định phê duyệt chỉ xảy ra khi quản trị viên bấm nút.</p>
+        </div>`;
+    document.getElementById('ai-curator-highlights').value = highlights.map(item => `• ${item}`).join('\n');
+    document.getElementById('ct-ai-review-retry').onclick = () => window.runAiStoryReview(postId, false);
+    document.getElementById('ct-ai-review-apply').onclick = () => window.applyAiHighlightsAndApprove(postId);
+}
+
+window.runAiStoryReview = async function (postId, isUncertaintyTest = false) {
+    if (ctAiBusy.has('review')) return;
+    currentReviewPostId = postId;
+    const loading = document.getElementById('curator-ai-loading');
+    const display = document.getElementById('curator-ai-display');
+    if (!display) return;
+    if (loading) loading.classList.remove('hidden');
+    display.innerHTML = '';
+    ctAiSetBusy('review', true);
+    try {
+        const context = await window.CultureTrailAiData.getContext({ purpose: 'review', targetId: postId });
+        if (context.error) throw new Error(context.error);
+        const review = ctAiValidateReview(await window.GeminiService.generateJson({
+            prompt: `Đọc kỹ bài viết được chọn và thẩm định dựa trên dữ liệu đối chiếu. Cho đúng 3 điểm nhấn riêng của bài. Không khẳng định bản quyền hay tính xác thực ngoài dữ liệu.${isUncertaintyTest ? ' Hãy đặc biệt chỉ ra mọi điểm thiếu dữ liệu và bất định.' : ''}`,
+            context,
+            schema: CT_REVIEW_SCHEMA,
+            requestKey: `review:${postId}:${context.revision}:${isUncertaintyTest}`
+        }));
+        ctAiRenderReview(postId, review, display);
+    } catch (error) {
+        ctAiShowError(display, error, () => window.runAiStoryReview(postId, isUncertaintyTest));
+    } finally {
+        if (loading) loading.classList.add('hidden');
+        ctAiSetBusy('review', false);
+    }
+};
+
+window.applyAiHighlightsAndApprove = function (postId) {
+    if (!ctAiLastReview || ctAiLastReview.postId !== postId) {
+        showToast('Chưa có kết quả thẩm định Gemini hợp lệ cho bài viết này.', 'error');
+        return;
+    }
+    const highlights = document.getElementById('ai-curator-highlights')?.value.trim() || '';
+    const score = ctAiLastReview.review.score;
+    const post = posts.find(item => item.id === postId);
+    if (post) {
+        Object.assign(post, { status: 'approved', aiHighlights: highlights, qualityScore: score, aiReview: ctAiLastReview.review });
+        savePosts();
+    }
+    const stories = getStore('stories');
+    const index = stories.findIndex(item => item.id === postId);
+    if (index >= 0) {
+        stories[index] = { ...stories[index], status: 'approved', aiHighlights: highlights, qualityScore: score, aiReview: ctAiLastReview.review };
+        setStore('stories', stories);
+    }
+    showToast('Quản trị viên đã áp dụng điểm nhấn và phê duyệt bài viết.', 'success');
+    switchView('view-adm-dash');
+};
+
+const CT_ADMIN_SCHEMA = {
+    type: 'OBJECT',
+    required: ['summary', 'metrics', 'observations', 'recommendations', 'limitations', 'evidence'],
+    properties: {
+        summary: { type: 'STRING' },
+        metrics: { type: 'ARRAY', items: { type: 'OBJECT', required: ['label', 'value', 'basis'], properties: { label: { type: 'STRING' }, value: { type: 'STRING' }, basis: { type: 'STRING' } } } },
+        observations: { type: 'ARRAY', items: { type: 'STRING' } },
+        recommendations: { type: 'ARRAY', items: { type: 'STRING' } },
+        limitations: { type: 'ARRAY', items: { type: 'STRING' } },
+        evidence: { type: 'ARRAY', items: { type: 'STRING' } }
+    }
+};
+
+function ctAiValidateAdminReport(report) {
+    if (!report || !report.summary || !Array.isArray(report.metrics)
+        || !report.metrics.every(metric => metric && metric.label && metric.value && metric.basis)
+        || !Array.isArray(report.observations) || !Array.isArray(report.recommendations)
+        || !Array.isArray(report.limitations) || !Array.isArray(report.evidence)) {
+        throw new Error('Gemini trả về báo cáo quản trị thiếu trường bắt buộc. Vui lòng thử lại.');
+    }
+    return report;
+}
+
+function ctAiRenderAdmin(report, display) {
+    ctAiLastAdminReport = report;
+    display.classList.remove('hidden');
+    display.innerHTML = `
+        <div class="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6 animate-fade-in">
+            <div><span class="text-xs font-bold text-brand-700">✨ PHÂN TÍCH GEMINI TỪ DỮ LIỆU HIỆN HÀNH</span><p class="mt-2 text-sm text-gray-700">${ctAiEscape(report.summary)}</p></div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">${(report.metrics || []).slice(0, 6).map(metric => `<div class="p-4 bg-brand-50 border border-brand-100 rounded-2xl"><p class="text-xs font-bold text-brand-700">${ctAiEscape(metric.label)}</p><p class="text-2xl font-extrabold text-brand-900 mt-1">${ctAiEscape(metric.value)}</p><p class="text-[11px] text-gray-600 mt-1">${ctAiEscape(metric.basis)}</p></div>`).join('')}</div>
+            <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl text-xs"><b>Nhận xét có thể suy ra:</b><ul class="list-disc ml-5 mt-1">${(report.observations || []).map(item => `<li>${ctAiEscape(item)}</li>`).join('')}</ul></div>
+            <div><label for="admin-ai-plan-text" class="text-xs font-bold text-gray-800">Khuyến nghị quản trị (có thể chỉnh sửa):</label><textarea id="admin-ai-plan-text" rows="6" class="w-full mt-2 p-4 bg-gray-50 border border-gray-200 rounded-2xl text-xs"></textarea></div>
+            <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs"><b>Giới hạn:</b><ul class="list-disc ml-5 mt-1">${(report.limitations || []).map(item => `<li>${ctAiEscape(item)}</li>`).join('')}</ul></div>
+            <div class="text-xs text-gray-600"><b>Căn cứ:</b> ${ctAiEscape((report.evidence || []).join(' • '))}</div>
+            <div class="pt-3 border-t border-gray-100 flex flex-wrap gap-2.5 justify-end"><button type="button" id="ct-ai-admin-retry" class="px-4 py-2.5 bg-gray-100 rounded-xl text-xs font-bold">🔄 Phân tích lại</button><button type="button" onclick="exportAiReportJson()" class="px-4 py-2.5 bg-brand-50 text-brand-700 rounded-xl text-xs font-bold">📥 Xuất JSON</button><button type="button" onclick="saveAiAdminPlan()" class="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-xs font-bold">💾 Lưu kế hoạch</button></div>
+        </div>`;
+    document.getElementById('admin-ai-plan-text').value = (report.recommendations || []).map((item, index) => `${index + 1}. ${item}`).join('\n');
+    document.getElementById('ct-ai-admin-retry').onclick = () => window.runAiAdminAnalytics(false);
+}
+
+window.runAiAdminAnalytics = async function (isFailureTest = false) {
+    if (ctAiBusy.has('admin')) return;
+    const loading = document.getElementById('admin-ai-loading');
+    const display = document.getElementById('admin-ai-results');
+    const errorBox = document.getElementById('admin-ai-error');
+    if (!display) return;
+    if (loading) loading.classList.remove('hidden');
+    display.classList.add('hidden');
+    if (errorBox) errorBox.classList.add('hidden');
+    ctAiSetBusy('admin', true);
+    try {
+        const domain = document.getElementById('admin-ai-domain')?.value || 'Toàn bộ hệ thống di sản';
+        const timeframe = document.getElementById('admin-ai-timeframe')?.value || 'Khoảng thời gian hiện tại';
+        const context = await window.CultureTrailAiData.getContext({ query: domain, purpose: 'admin' });
+        const report = ctAiValidateAdminReport(await window.GeminiService.generateJson({
+            prompt: `Phân tích quản trị cho phạm vi "${domain}", mốc "${timeframe}". Chỉ nêu số liệu tính trực tiếp được từ DATA_CONTEXT. Không tạo phần trăm tăng trưởng, công suất, độ tin cậy hoặc dự báo nếu thiếu dữ liệu chuỗi thời gian.${isFailureTest ? ' Tập trung đánh giá thiếu hụt dữ liệu và nói rõ điều không thể kết luận.' : ''}`,
+            context,
+            schema: CT_ADMIN_SCHEMA,
+            requestKey: `admin:${domain}:${timeframe}:${context.revision}:${isFailureTest}`
+        }));
+        ctAiRenderAdmin(report, display);
+    } catch (error) {
+        ctAiShowError(errorBox || display, error, () => window.runAiAdminAnalytics(isFailureTest));
+    } finally {
+        if (loading) loading.classList.add('hidden');
+        ctAiSetBusy('admin', false);
+    }
+};
+
+window.saveAiAdminPlan = function () {
+    if (!ctAiLastAdminReport) {
+        showToast('Chưa có báo cáo Gemini để lưu.', 'error');
+        return;
+    }
+    const domain = document.getElementById('admin-ai-domain')?.value || 'Toàn bộ hệ thống di sản';
+    const timeframe = document.getElementById('admin-ai-timeframe')?.value || '';
+    const recommendations = document.getElementById('admin-ai-plan-text')?.value.trim() || '';
+    const plans = getStore('admin_plans');
+    plans.unshift({
+        id: `AP-${Date.now()}`,
+        title: `Kế hoạch: ${domain}`,
+        timeframe,
+        domain,
+        recommendations,
+        analysis: ctAiLastAdminReport,
+        generatedBy: window.CULTURETRAIL_GEMINI_CONFIG?.model || 'gemini-3.5-flash-lite',
+        savedAt: new Date().toISOString().slice(0, 10)
+    });
+    setStore('admin_plans', plans);
+    showToast('Đã lưu báo cáo Gemini sau khi quản trị viên xác nhận.', 'success');
+    renderAdminSavedPlans();
+};
+
+window.exportAiReportJson = function () {
+    const exportData = { currentReport: ctAiLastAdminReport, savedPlans: getStore('admin_plans'), exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `CultureTrail_Gemini_Analytics_${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+    showToast('Đã xuất báo cáo JSON.', 'info');
+};
+
+// Refresh legacy screen state after the asynchronous JSON seed completes.
+// This closes the old race where app.js inserted unrelated hard-coded records
+// before assets/data/*.json could load.
+if (window.ApiService && window.ApiService.ready) {
+    window.ApiService.ready.then(initialized => {
+        if (!initialized) return;
+        posts = window.ApiService.get('posts');
+        const storedCreators = window.ApiService.getCreators();
+        storedCreators.forEach(creator => {
+            creators[creator.id] = {
+                ...creator,
+                role: creator.title || 'Nghệ nhân văn hóa',
+                craft: creator.title || 'Thủ công truyền thống',
+                cover: creator.cover || '1018'
+            };
+            profiles[creator.id] = creators[creator.id];
+        });
+        if (document.getElementById('public-posts-container')) renderPublicPosts();
+        if (document.getElementById('creator-list-container')) renderCreatorList();
+        if (document.getElementById('creator-posts-container')) renderCreatorManagePosts();
+        if (document.getElementById('admin-posts-container')) renderAdminPosts();
+        if (document.getElementById('admin-creators-container')) renderAdminCreators();
+        if (document.getElementById('my-saved-trails-list')) renderMySavedTrails();
+        if (document.getElementById('admin-saved-plans-container')) renderAdminSavedPlans();
+    });
+}

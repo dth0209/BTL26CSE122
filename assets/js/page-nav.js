@@ -8,8 +8,8 @@
    1) Giữ nguyên switchView() gốc. Nếu view KHÔNG tồn tại trên trang hiện tại
       thì tự chuyển sang file .html tương ứng (mọi onclick="switchView(...)"
       trong code gốc vẫn chạy đúng, không phải sửa).
-   2) Giữ trạng thái đăng nhập (currentUser) và dữ liệu bài viết (posts) khi
-      di chuyển giữa các trang bằng sessionStorage.
+   2) Giữ trạng thái đăng nhập trong sessionStorage; dữ liệu nghiệp vụ được
+      lưu bền vững trong LocalStorage qua ApiService.
    3) Chuyển tham số cho các trang được render bằng JS:
       post-detail.html / creator-profile.html / curator-review.html / ai-trail.html
    ========================================================================== */
@@ -72,11 +72,22 @@ let navEnabled = false;
 function ssSet(key, value) { try { sessionStorage.setItem(key, value); } catch (e) { /* ignore */ } }
 function ssGet(key)        { try { return sessionStorage.getItem(key); } catch (e) { return null; } }
 function ssDel(key)        { try { sessionStorage.removeItem(key); } catch (e) { /* ignore */ } }
-function savePosts()       { try { ssSet(SS_KEY.posts, JSON.stringify(posts)); } catch (e) { /* ignore */ } }
+function savePosts() {
+    try {
+        if (window.ApiService) window.ApiService.save('posts', posts);
+        else localStorage.setItem(SS_KEY.posts, JSON.stringify(posts));
+    } catch (e) { /* ignore */ }
+}
 
 /* [V2] Lưu trạng thái nghệ nhân (verified / active) mà admin vừa thay đổi.
    app.js gọi 2 hàm này qua tên toàn cục ctSavePosts / ctSaveCreators. */
-function saveCreators()    { try { ssSet(SS_KEY.creators, JSON.stringify(creators)); } catch (e) { /* ignore */ } }
+function saveCreators() {
+    try {
+        const list = Object.values(creators);
+        if (window.ApiService) window.ApiService.save('creators', list);
+        else localStorage.setItem(SS_KEY.creators, JSON.stringify(list));
+    } catch (e) { /* ignore */ }
+}
 window.ctSavePosts    = savePosts;
 window.ctSaveCreators = saveCreators;
 
@@ -113,7 +124,7 @@ window.ctSaveCreators = saveCreators;
    ============================================================================= */
 (function restoreState() {
     /* 1a. Danh sách bài viết (đã duyệt / đã xóa / mới tạo ở trang trước) */
-    const savedPosts = ssGet(SS_KEY.posts);
+    const savedPosts = localStorage.getItem(SS_KEY.posts);
     if (savedPosts) {
         try { posts = JSON.parse(savedPosts); } catch (e) { /* ignore */ }
     }
@@ -121,12 +132,13 @@ window.ctSaveCreators = saveCreators;
     /* [V2] 1a-bis. Trạng thái nghệ nhân do admin thay đổi (xác minh / khoá).
        Ghi ngược vào đúng object đang tồn tại để `profiles.creatorX` (tham chiếu
        tới cùng object) không bị lệch dữ liệu. */
-    const savedCreators = ssGet(SS_KEY.creators);
+    const savedCreators = localStorage.getItem(SS_KEY.creators);
     if (savedCreators) {
         try {
             const parsed = JSON.parse(savedCreators);
-            Object.keys(parsed).forEach(function (key) {
-                if (creators[key]) Object.assign(creators[key], parsed[key]);
+            const list = Array.isArray(parsed) ? parsed : Object.values(parsed);
+            list.forEach(function (creator) {
+                if (creator && creator.id) creators[creator.id] = Object.assign({}, creators[creator.id] || {}, creator);
             });
         } catch (e) { /* ignore */ }
     }
