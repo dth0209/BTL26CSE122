@@ -364,3 +364,88 @@ window.addEventListener('load', function () {
     } catch (e) { /* ignore */ }
 });
 
+/* =============================================================================
+   5. TÌM KIẾM TRÊN TRANG CHỦ: LỌC 6 CARD GRID & CUỘN MƯỢT (SMOOTH SCROLL)
+   ============================================================================= */
+(function initHomeCardSearch() {
+    function removeAccents(str) {
+        return (str || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+    }
+
+    function filterHomeCards(query) {
+        const destSection = document.getElementById('featured-destinations');
+        const cardsGrid = document.getElementById('featured-cards-grid');
+        const emptyState = document.getElementById('featured-no-results');
+        if (!cardsGrid) return;
+
+        const cards = cardsGrid.querySelectorAll('article');
+        const cleanQuery = removeAccents(query.trim());
+        let matchCount = 0;
+
+        cards.forEach(card => {
+            const cardText = removeAccents(card.textContent);
+            if (!cleanQuery || cardText.includes(cleanQuery)) {
+                card.classList.remove('hidden');
+                matchCount++;
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        // Ẩn/hiện Empty State khi gõ chữ linh tinh
+        if (emptyState) {
+            if (matchCount === 0) {
+                emptyState.classList.remove('hidden');
+                cardsGrid.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                cardsGrid.classList.remove('hidden');
+            }
+        }
+
+        // Tự động cuộn trang mượt mà xuống phần 6 card
+        if (destSection) {
+            destSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function setupSearchEvents(inputId, btnId) {
+        const input = document.getElementById(inputId);
+        const btn = document.getElementById(btnId);
+
+        if (input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    filterHomeCards(input.value);
+                }
+            });
+        }
+        if (btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                filterHomeCards(input ? input.value : '');
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setupSearchEvents('hero-search-input-desktop', 'hero-search-btn-desktop');
+        setupSearchEvents('hero-search-input-mobile', 'hero-search-btn-mobile');
+
+        // Nút bấm "Xem tất cả 6 điểm đến" khi danh sách trống
+        const resetBtn = document.getElementById('btn-reset-home-search');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                const dtInput = document.getElementById('hero-search-input-desktop');
+                const mbInput = document.getElementById('hero-search-input-mobile');
+                if (dtInput) dtInput.value = '';
+                if (mbInput) mbInput.value = '';
+                filterHomeCards('');
+            });
+        }
+    });
+})();
