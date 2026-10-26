@@ -178,11 +178,11 @@
                         <!-- Search Pill Input -->
                         <div class="w-full bg-white rounded-full shadow-xl flex items-center px-5 py-3.5 border border-gray-100">
                             <svg class="w-5 h-5 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            <input type="text" id="hero-search-input-mobile" placeholder="Tìm kiếm Hội An, Bát Tràng, Sapa..." class="w-full bg-transparent border-none focus:outline-none text-gray-800 text-sm sm:text-base placeholder-gray-400" onkeypress="if(event.key === 'Enter') switchView('view-exp-discover')">
+                            <input type="text" id="hero-search-input-mobile" aria-label="Tìm kiếm di sản" placeholder="Tìm kiếm Hội An, Bát Tràng, Sapa..." class="w-full bg-transparent border-none focus:outline-none text-gray-800 text-sm sm:text-base placeholder-gray-400">
                         </div>
-                        <!-- Button 1: Khám phá -->
-                        <button onclick="switchView('view-exp-discover')" class="w-full bg-[#059669] hover:bg-[#047857] text-white font-bold py-3.5 rounded-full shadow-lg transition-all text-base flex items-center justify-center cursor-pointer active:scale-95">
-                            Khám phá
+                        <!-- Button 1: Tìm kiếm -->
+                        <button type="button" id="hero-search-btn-mobile" class="w-full bg-[#059669] hover:bg-[#047857] text-white font-bold py-3.5 rounded-full shadow-lg transition-all text-base flex items-center justify-center cursor-pointer active:scale-95">
+                            Tìm kiếm
                         </button>
                         <!-- Button 2: Tạo lịch trình AI -->
                         <button onclick="switchView('view-exp-trail')" class="w-full bg-[#6d28d9] hover:bg-[#5b21b6] text-white font-bold py-3.5 rounded-full shadow-lg transition-all text-base flex items-center justify-center gap-2 cursor-pointer active:scale-95">
@@ -196,9 +196,9 @@
                         <div class="w-full flex-grow bg-white p-2 rounded-full shadow-2xl flex items-center gap-2">
                             <div class="flex-grow flex items-center w-full pl-6 pr-2 py-2">
                                 <svg class="w-6 h-6 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                <input type="text" id="hero-search-input-desktop" placeholder="Tìm kiếm Hội An, Bát Tràng, Sapa..." class="w-full border-none focus:outline-none text-lg text-gray-800" onkeypress="if(event.key === 'Enter') switchView('view-exp-discover')">
+                                <input type="text" id="hero-search-input-desktop" aria-label="Tìm kiếm di sản" placeholder="Tìm kiếm Hội An, Bát Tràng, Sapa..." class="w-full border-none focus:outline-none text-lg text-gray-800">
                             </div>
-                            <button onclick="switchView('view-exp-discover')" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 py-4 rounded-full transition-colors shrink-0">Khám phá</button>
+                            <button type="button" id="hero-search-btn-desktop" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 py-4 rounded-full transition-colors shrink-0">Tìm kiếm</button>
                         </div>
                         <button onclick="switchView('view-exp-trail')" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold px-8 py-4 rounded-full shadow-xl transition-all hover:scale-105 flex items-center justify-center gap-2 shrink-0">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -209,13 +209,13 @@
             </div>
 
             <!-- Featured Destinations -->
-            <section class="py-12 sm:py-20 md:py-24 px-4 max-w-7xl mx-auto bg-white w-full">
+            <section id="featured-destinations" class="py-12 sm:py-20 md:py-24 px-4 max-w-7xl mx-auto bg-white w-full scroll-mt-6">
                 <div class="text-center mb-10 sm:mb-16">
                     <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Tinh Hoa Văn Hóa 3 Miền</h2>
                     <p class="text-gray-500 text-sm sm:text-base md:text-lg">Những hành trình được thiết kế trực tiếp bởi người bản địa.</p>
                 </div>
                 <!-- 6 Cards Grid (Static Highlights) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div id="featured-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <article class="bg-gray-50 rounded-[32px] overflow-hidden border border-gray-100 hover:shadow-xl transition-all cursor-pointer group" onclick="openPostDetail('CT-1001')">
                         <div class="relative h-64 bg-gray-200 overflow-hidden">
                             <img src="https://picsum.photos/id/1018/800/600" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="Đèn lồng phố Hội">
@@ -276,6 +276,15 @@
                             <span class="text-brand-600 font-bold">Xem chi tiết &rarr;</span>
                         </div>
                     </article>
+                </div>
+                <!-- Khung hiển thị khi không tìm thấy kết quả -->
+                <div id="featured-no-results" class="hidden text-center py-14 bg-gray-50 border border-dashed border-gray-200 rounded-3xl mt-6">
+                    <span class="text-4xl">🔍</span>
+                    <h4 class="text-xl font-bold text-gray-800 mt-3">Không tìm thấy trải nghiệm phù hợp</h4>
+                    <p class="text-sm text-gray-500 mt-1">Không có địa danh hay trải nghiệm nào khớp với từ khóa của bạn.</p>
+                    <button type="button" id="btn-reset-home-search" class="mt-4 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-full text-xs transition-colors">
+                        Xem tất cả 6 điểm đến
+                    </button>
                 </div>
             </section>
         </section>
