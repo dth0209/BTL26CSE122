@@ -3,7 +3,7 @@
 > **Học phần:** Phát triển ứng dụng Web cơ bản (CSE122)  
 > **Đơn vị đào tạo:** Khoa Công nghệ Thông tin – Trường Đại học Thủy Lợi (TLU)  
 > **Giảng viên hướng dẫn & chấm thi:** ThS. Kiều Tuấn Dũng – ThS. Tạ Chí Hiếu  
-> **Nhóm thực hiện:** BTL-26 (Nhóm 3 sinh viên SV1, SV2, SV3)  
+> **Nhóm thực hiện:** BTL-26 (Nhóm 3 sinh viên Nguyễn Đình Sang, Đặng Trung Hiếu, Lê Quang Huy)  
 
 ---
 
