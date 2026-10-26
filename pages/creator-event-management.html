@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Sự kiện & Workshop | CultureTrail - Nền tảng Du lịch Văn hóa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/js/tailwind.config.js"></script>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/pages/creator.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body class="font-sans text-gray-800 antialiased h-screen flex selection:bg-brand-100 selection:text-brand-700">
+    <div id="toast-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-[10000] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- FLOATING CHAT WIDGET -->
+    <div id="chat-widget-container" class="flex flex-col items-end shadow-2xl rounded-3xl transition-transform">
+        <div id="chat-window" class="hidden w-[calc(100vw-32px)] max-w-[360px] bg-white rounded-3xl border border-gray-200 mb-4 overflow-hidden flex-col shadow-xl">
+            <div id="chat-header" class="bg-brand-700 p-4 text-white flex justify-between items-center select-none">
+                <div class="flex items-center gap-2 pointer-events-none">
+                    <svg class="w-5 h-5 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <h3 class="font-bold text-sm">Trợ lý Văn hóa AI</h3>
+                </div>
+                                <div class="flex items-center gap-1">
+                    <button onclick="toggleChat(false)" title="Thu gọn trợ lý" aria-label="Thu gọn trợ lý" class="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 focus:outline-none transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <button onclick="toggleChat(false)" title="Đóng cửa sổ" aria-label="Đóng cửa sổ" class="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 focus:outline-none transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto max-h-[50vh] sm:max-h-[300px] min-h-[160px] bg-slate-50 text-sm custom-scrollbar flex flex-col gap-3 overscroll-contain">
+                <div class="flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 flex-shrink-0 border border-brand-200">✨</div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-gray-700 border border-gray-100 max-w-[85%]">
+                        Chào bạn! Tôi là AI Hướng dẫn viên. Bạn muốn hỏi gì?
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
+                <input type="text" id="chat-input" placeholder="Hỏi tôi về sự kiện..." class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-sm" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()" class="px-4 py-2 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition-all">Gửi</button>
+            </div>
+        </div>
+                <button id="chat-toggle-btn" onclick="toggleChat()" aria-label="Mở Trợ lý Văn hóa AI" aria-expanded="false" title="Mở / Thu gọn Trợ lý Văn hóa AI" class="w-12 h-12 sm:w-14 sm:h-14 bg-brand-600 hover:bg-brand-700 text-white rounded-full shadow-glow flex items-center justify-center border-2 border-white transition-all hover:scale-105 active:scale-95 pointer-events-auto cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+        </button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside id="app-sidebar" class="w-64 bg-white border-r border-gray-100 flex-col h-full flex-shrink-0 z-40 transition-all hidden md:flex">
+        <div class="h-20 flex items-center px-6 border-b border-gray-50 cursor-pointer group" onclick="switchView('view-home')" title="Về trang chủ">
+            <svg class="w-8 h-8 text-brand-600 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-2xl font-bold text-brand-700">Culture<span class="text-gray-800">Trail</span></span>
+        </div>
+        <div class="px-4 mt-6">
+            <button onclick="switchView('view-home')" class="w-full flex items-center gap-3 px-4 py-2.5 bg-gray-100 hover:bg-brand-50 hover:text-brand-700 text-gray-700 rounded-xl font-semibold transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Về Trang chủ
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto custom-scrollbar py-2 px-3 space-y-1 mt-2" id="sidebar-menu"></div>
+        <div class="p-4 border-t border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-3 mb-4">
+                <img id="sidebar-avatar" src="https://i.pravatar.cc/150?img=2" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                <div>
+                    <p id="sidebar-name" class="text-sm font-bold text-gray-900">Cô Lan Dệt Lụa</p>
+                    <p id="sidebar-role" class="text-xs text-brand-600 font-semibold">Nghệ nhân</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex justify-center items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Đăng xuất
+            </button>
+        </div>
+    </aside>
+
+    <main id="app-main" class="flex-1 h-full overflow-y-auto relative custom-scrollbar bg-white flex flex-col">
+        <section id="view-cre-events" class="view-section active bg-stone-50 flex-grow">
+            <div class="p-6 md:p-10 max-w-7xl mx-auto w-full flex-grow">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                            <button onclick="switchView('view-cre-story')" class="hover:text-brand-600 font-semibold">Không gian Nghệ nhân</button>
+                            <span>/</span>
+                            <span class="text-brand-700 font-bold">Quản lý Sự kiện</span>
+                        </div>
+                        <h2 class="text-3xl font-extrabold text-gray-900">Quản lý Sự kiện & Workshop Di sản</h2>
+                    </div>
+                    <button onclick="showToast('Chức năng tạo sự kiện đang mở form', 'info')" class="bg-brand-700 hover:bg-brand-800 text-white font-bold py-2.5 px-5 rounded-xl shadow-sm transition-colors flex items-center gap-2">
+                        <span>📅</span> Tổ chức Workshop mới
+                    </button>
+                </div>
+
+                <!-- KPI Summary -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm text-center">
+                        <div class="text-2xl font-black text-gray-900">3</div>
+                        <div class="text-xs text-gray-500 font-bold mt-1">Tổng số sự kiện</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm text-center">
+                        <div class="text-2xl font-black text-emerald-600">2</div>
+                        <div class="text-xs text-gray-500 font-bold mt-1">Sắp diễn ra</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm text-center">
+                        <div class="text-2xl font-black text-brand-700">25</div>
+                        <div class="text-xs text-gray-500 font-bold mt-1">Khách đã đăng ký</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm text-center">
+                        <div class="text-2xl font-black text-amber-600">100%</div>
+                        <div class="text-xs text-gray-500 font-bold mt-1">Đánh giá 5 sao</div>
+                    </div>
+                </div>
+
+                <!-- Event Cards List -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                        <img src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=800&q=80" class="h-48 w-full object-cover">
+                        <div class="p-6 flex-1 flex flex-col justify-between">
+                            <div>
+                                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">Sắp diễn ra</span>
+                                <h3 class="text-lg font-bold text-gray-900 mt-2">Workshop Trải nghiệm vuốt gốm Bát Tràng</h3>
+                                <p class="text-sm text-gray-500 mt-2">Nghệ nhân: Trần Văn Hùng · 10/04/2026</p>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <span class="font-bold text-brand-700">150.000đ / khách</span>
+                                <button onclick="showToast('Đã chọn xem danh sách đăng ký', 'info')" class="px-3 py-1.5 bg-gray-100 hover:bg-brand-50 text-gray-700 hover:text-brand-700 font-semibold text-xs rounded-xl transition-colors">Xem đăng ký</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                        <img src="https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=800&q=80" class="h-48 w-full object-cover">
+                        <div class="p-6 flex-1 flex flex-col justify-between">
+                            <div>
+                                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full">Sắp diễn ra</span>
+                                <h3 class="text-lg font-bold text-gray-900 mt-2">Khám phá kỹ thuật dệt lụa tơ tằm Vạn Phúc</h3>
+                                <p class="text-sm text-gray-500 mt-2">Nghệ nhân: Nguyễn Thị Tâm · 12/04/2026</p>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <span class="font-bold text-brand-700">200.000đ / khách</span>
+                                <button onclick="showToast('Đã chọn xem danh sách đăng ký', 'info')" class="px-3 py-1.5 bg-gray-100 hover:bg-brand-50 text-gray-700 hover:text-brand-700 font-semibold text-xs rounded-xl transition-colors">Xem đăng ký</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                        <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80" class="h-48 w-full object-cover">
+                        <div class="p-6 flex-1 flex flex-col justify-between">
+                            <div>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">Đã kết thúc</span>
+                                <h3 class="text-lg font-bold text-gray-900 mt-2">Nghệ thuật in tranh khắc gỗ Dân gian Đông Hồ</h3>
+                                <p class="text-sm text-gray-500 mt-2">Nghệ nhân: Nguyễn Đăng Chế · 20/03/2026</p>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <span class="font-bold text-gray-500">Miễn phí tham quan</span>
+                                <span class="text-xs text-emerald-600 font-bold">Hoàn thành</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="bg-gray-900 text-gray-300 py-12 border-t border-gray-800 flex-shrink-0 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+                &copy; 2026 CultureTrail. Nền tảng Du lịch Văn hóa Di sản.
+            </div>
+        </footer>
+    </main>
+
+    <script src="../assets/js/gemini-config.local.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/ai-data-context.js"></script>
+    <script src="../assets/js/gemini-service.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script src="../assets/js/page-nav.js"></script>
+    <script src="../assets/js/role-switcher.js"></script>
+</body>
+</html>
